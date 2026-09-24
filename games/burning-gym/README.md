@@ -10,6 +10,36 @@ The gym is meant as that base: the stats, the burn-to-train loop and the Tier ca
 
 Built with FriendSDK v0.1.2.
 
+## How the burn system works
+
+1. **The food chain.** Your Friend can only burn Friends of **its own generation or weaker**. A higher generation number means a weaker, more common Friend. A Gen 1 can burn anything; a Gen 6 can only burn other Gen 6s.
+
+   | Your Friend | Can burn |
+   |---|---|
+   | Gen 1 | Gen 1–6 |
+   | Gen 2 | Gen 2–6 |
+   | Gen 3 | Gen 3–6 |
+   | Gen 4 | Gen 4–6 |
+   | Gen 5 | Gen 5–6 |
+   | Gen 6 | Gen 6 |
+
+2. **XP and training time per burned Friend.** A burned Friend gives XP equal to its official hardwire value (10× per generation). Each burn also adds training time: the stat only grows once your Friend has finished training at the machine. You can burn several Friends at once; their XP and time add up into one session.
+
+   | Burned Friend | XP gained | Training time |
+   |---|---|---|
+   | Gen 1 | 100,000 | 10 h 48 m |
+   | Gen 2 | 10,000 | 1 h 48 m |
+   | Gen 3 | 1,000 | 18 m |
+   | Gen 4 | 100 | 3 m |
+   | Gen 5 | 10 | 30 s |
+   | Gen 6 | 1 | 5 s |
+
+3. **XP per level depends on your generation.** A rarer Friend needs more XP per level. The rule: **one Friend of your own generation takes a stat from level 1 to 100**. The curve is quadratic (`XP needed = own hardwire × (level / 100)²`), so early levels are cheap and weaker fuel still helps, while the last levels cost the most. Level 20 costs 4% of a same-generation burn, 40 costs 16%, 60 costs 36%, 80 costs 64% and 100 costs 100%.
+
+   *Example: a Gen 3 Friend needs 1,000 XP to max a stat.* One Gen 3 burn → level 100 (18 min). One Gen 4 burn → level 31 (3 min). One Gen 5 → level 10. One Gen 6 → level 3.
+
+4. **Tiers cap the levels.** Tier 0–4 caps every stat at 20 / 40 / 60 / 80 / 100, and each Tier unlocks the next 20 levels. Upgrades cost RF at the official prices. XP earned above the cap isn't lost: it is banked and counts as soon as the next Tier opens.
+
 ## Why burning: a progression base for Rare Friends NFTs
 
 Burning Gym is built around one idea: **burning NFTs should make your Friend stronger**. Instead of sitting unused in wallets, lesser Friends become fuel. Your main Friend turns them into permanent, readable stats that future Rare Friends games can build on.
