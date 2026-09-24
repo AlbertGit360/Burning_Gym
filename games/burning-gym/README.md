@@ -10,6 +10,43 @@ The gym is meant as that base: the stats, the burn-to-train loop and the Tier ca
 
 Built with FriendSDK v0.1.2.
 
+## Why burning: a progression base for Rare Friends NFTs
+
+Burning Gym is built around one idea: **burning NFTs should make your Friend stronger**. Instead of sitting unused in wallets, lesser Friends become fuel. Your main Friend turns them into permanent, readable stats that future Rare Friends games can build on.
+
+### What it solves
+
+- **Spare Friends get a use.** Common and duplicate Friends (Gen 5–6 especially) have no role today. Here they are training fuel, which creates demand for exactly the Friends people hold most of.
+- **Supply goes down, permanently.** A burned Friend leaves circulation. Every Generations NFT was originally hardwired with $RAREFRIENDS, so each burn removes that RF value from the market.
+- **A recurring RF sink.** Tier upgrades are paid in RF at the official prices. By the Rare Friends protocol, every upgrade payment is split **50% burned / 50% RF rewards**.
+- **Progression that belongs to the Friend.** HP, Strength, Agility and Defence (plus Tier and Combat Level) form one shared character sheet. PvP, PvE, tournaments and raids can all read it, so a Friend trained here matters everywhere.
+- **Rarity is respected.** The food chain lets a Friend burn only its own generation or weaker ones, and XP scales 10× per generation. Rare Friends need rare fuel, which keeps the value hierarchy intact.
+
+### Stats reset on sale, just like Tier
+
+The Rare Friends protocol already says: *"A direct transfer clears activation and upgrades; reactivation costs 10% of that generation's hardwire price and starts at tier 0."* Burning Gym follows the same rule for its stats. **When a Friend is sold or transferred, its stats and Tier reset.** This means:
+
+- a buyer pays for the Friend itself (its generation and art), not for someone else's grind;
+- the secondary market can't be used to skip training;
+- every new owner burns and upgrades again, so the sink keeps working with every sale.
+
+*(In this preview, stats live only in the current session. Reset-on-transfer is the rule for the on-chain version and matches how the protocol already treats Tier.)*
+
+### The numbers: one fully built Friend
+
+"Fully built" means all four stats at 100 and Tier 4. The figures below use the official Hardwire and upgrade tables; amounts are in RF.
+
+| Generation | Hardwire | Friends burned to max 4 stats | …or in Gen 6 Friends | Tier 0→4 upgrades | of which burned (50%) | Reactivation after a sale |
+|---|---|---|---|---|---|---|
+| Gen 1 | 100,000 | 4 × Gen 1 (400,000 of hardwire value) | 400,000 | 406,250 | 203,125 | 10,000 |
+| Gen 2 | 10,000 | 4 × Gen 2 (40,000) | 40,000 | 40,625 | 20,312.5 | 1,000 |
+| Gen 3 | 1,000 | 4 × Gen 3 (4,000) | 4,000 | 4,062.5 | 2,031.25 | 100 |
+| Gen 4 | 100 | 4 × Gen 4 (400) | 400 | 406.25 | 203.13 | 10 |
+| Gen 5 | 10 | 4 × Gen 5 (40) | 40 | 40.63 | 20.31 | 1 |
+| Gen 6 | 1 | 4 × Gen 6 (4) | 4 | 4.06 | 2.03 | 0.1 |
+
+In short, a fully built Friend retires about **4× its own hardwire value in burned Friends** and burns another **~2× its hardwire in RF** through Tier upgrades. Because of reset-on-sale, that cost is paid again by every new owner. A single fully built Gen 3 Friend, for example, removes 4 Gen 3 Friends (or 4,000 Gen 6 Friends) from supply and burns about 2,031 RF.
+
 ## Requirements
 
 - A browser wallet on Robinhood mainnet (chain 4663) holding a hardwired Rare Friends Generations NFT (generation 1 or higher). The SDK runtime handles wallet connection, Friend selection and the fresh ownership check. The game code does not add its own.
