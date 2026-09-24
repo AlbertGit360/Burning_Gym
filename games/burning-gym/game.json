@@ -1,0 +1,8 @@
+{
+  "name": "Burning Gym",
+  "consumable": "Training Session",
+  "price": "1",
+  "outcomes": [
+    { "name": "Training", "chanceBps": 10000, "reward": "1" }
+  ]
+}

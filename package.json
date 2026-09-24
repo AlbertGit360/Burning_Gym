@@ -1,0 +1,195 @@
+{
+  "name": "@rarefriends/friendsdk",
+  "version": "0.1.2",
+  "description": "Rare Friends game building blocks and chance-game reference",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "files": [
+    "dist",
+    "src",
+    "assets",
+    "examples",
+    "API.md",
+    "HOST_INTEGRATION.md",
+    "WORLD_RULES.md",
+    "SOUND_KIT.md",
+    "NOTICE.md",
+    "AGENTS.md",
+    "FISHING_GAME_DESIGN.md",
+    "docs/oracle",
+    "scripts",
+    "tests",
+    "games",
+    "contracts/src",
+    "contracts/test",
+    "contracts/lib",
+    "contracts/foundry.toml",
+    "contracts/README.md",
+    "contracts/AGENTS.md",
+    "contracts/COMMANDMENTS.md",
+    "tsconfig.json",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./world": {
+      "types": "./dist/friend-world.d.ts",
+      "import": "./dist/friend-world.js"
+    },
+    "./navigation": {
+      "types": "./dist/friend-navigation.d.ts",
+      "import": "./dist/friend-navigation.js"
+    },
+    "./movement": {
+      "types": "./dist/movement.d.ts",
+      "import": "./dist/movement.js"
+    },
+    "./assets": {
+      "types": "./dist/assets.d.ts",
+      "import": "./dist/assets.js"
+    },
+    "./sprites": {
+      "types": "./dist/friend-sprites.d.ts",
+      "import": "./dist/friend-sprites.js"
+    },
+    "./identity": {
+      "types": "./dist/identity.d.ts",
+      "import": "./dist/identity.js"
+    },
+    "./sounds": {
+      "types": "./dist/friend-sounds.d.ts",
+      "import": "./dist/friend-sounds.js"
+    },
+    "./items": {
+      "types": "./dist/items.d.ts",
+      "import": "./dist/items.js"
+    },
+    "./ui": {
+      "types": "./dist/experience-ui.d.ts",
+      "import": "./dist/experience-ui.js"
+    },
+    "./reveal": {
+      "types": "./dist/reward-reveal.d.ts",
+      "import": "./dist/reward-reveal.js"
+    },
+    "./game": {
+      "types": "./dist/game.d.ts",
+      "import": "./dist/game.js"
+    },
+    "./host": {
+      "types": "./dist/chain.d.ts",
+      "import": "./dist/chain.js"
+    },
+    "./examples/fishing": {
+      "types": "./examples/fishing/index.tsx",
+      "import": "./dist/examples/fishing/index.js"
+    },
+    "./examples/fishing.css": "./dist/examples/fishing/index.css",
+    "./examples/embedded": {
+      "types": "./examples/embedded/index.tsx",
+      "import": "./dist/examples/embedded/index.js"
+    },
+    "./ui.css": "./assets/experience-ui.css",
+    "./reveal.css": "./assets/reward-reveal.css",
+    "./worlds.json": "./src/friend-worlds.json",
+    "./frame": {
+      "types": "./dist/game-frame.d.ts",
+      "import": "./dist/game-frame.js"
+    },
+    "./frame.css": "./assets/game-frame.css",
+    "./bridge": {
+      "types": "./dist/frame-bridge.d.ts",
+      "import": "./dist/frame-bridge.js"
+    },
+    "./examples/fishing/game.json": "./examples/fishing/game.json",
+    "./examples/fishing/art.json": "./examples/fishing/art.json",
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "import": "./dist/runtime.js"
+    },
+    "./wallet": {
+      "types": "./dist/wallet.d.ts",
+      "import": "./dist/wallet.js"
+    },
+    "./owned": {
+      "types": "./dist/owned-friends.d.ts",
+      "import": "./dist/owned-friends.js"
+    },
+    "./world-view": {
+      "types": "./dist/world-view.d.ts",
+      "import": "./dist/world-view.js"
+    },
+    "./runtime.css": "./assets/runtime.css",
+    "./world-view.css": "./assets/world-view.css",
+    "./build": {
+      "types": "./scripts/dev-game.d.mts",
+      "import": "./scripts/dev-game.mjs"
+    },
+    "./serve": {
+      "types": "./scripts/dev-game.d.mts",
+      "import": "./scripts/dev-game.mjs"
+    },
+    "./testing": {
+      "types": "./scripts/testing.d.mts",
+      "import": "./scripts/testing.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/build-fishing.mjs && node scripts/build-embedded.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p examples/tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "prepack": "npm run build",
+    "sync:contracts": "node scripts/sync-contract-abi.mjs",
+    "verify:contracts": "node scripts/sync-contract-abi.mjs --check",
+    "build:contracts": "forge build --root contracts",
+    "test:contracts": "forge test --root contracts",
+    "deploy:contracts": "npm run build:contracts && npm run sync:contracts && npm run build && node scripts/contracts/deploy.mjs",
+    "play:contracts": "node scripts/contracts/play.mjs",
+    "resolve:contracts": "node scripts/contracts/resolve.mjs",
+    "check:games": "node scripts/check-games.mjs",
+    "dev:game": "npm run build && node scripts/dev-game.mjs dev",
+    "dev:fishing": "npm run build && node scripts/dev-game.mjs dev examples/fishing --outdir examples/fishing/.friendsdk/preview",
+    "dev:fishing:live": "npm run build && node scripts/dev-game.mjs dev examples/fishing --outdir examples/fishing/.friendsdk/live --deployment examples/fishing/deployment.json",
+    "build:fishing": "npm run build && node scripts/dev-game.mjs build examples/fishing --outdir examples/fishing/.friendsdk/preview",
+    "build:fishing:live": "npm run build && node scripts/dev-game.mjs build examples/fishing --outdir examples/fishing/.friendsdk/live --deployment examples/fishing/deployment.json",
+    "check:runtime": "node scripts/check-runtime-browser.mjs",
+    "check:browser": "node scripts/check-fishing-browser.mjs && node scripts/check-embedded-browser.mjs && node scripts/check-runtime-browser.mjs && node scripts/check-starter-browser.mjs && node scripts/check-session-browser.mjs && node scripts/check-live-browser.mjs",
+    "check:starter": "node scripts/check-starter-browser.mjs",
+    "check:live": "node scripts/check-live-browser.mjs"
+  },
+  "dependencies": {
+    "viem": "2.56.3",
+    "esbuild": "0.28.2"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "playwright": "1.63.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "6.0.3"
+  },
+  "bin": {
+    "friendsdk": "./scripts/dev-game.mjs"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  }
+}

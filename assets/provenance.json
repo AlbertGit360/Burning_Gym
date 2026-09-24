@@ -1,0 +1,23 @@
+{
+  "collection": "Rare Friends Isometric World Assets",
+  "sourceDate": "2026-09-10",
+  "adaptation": "Browser-safe typed renderer derived from the approved vector scenery and projection. Original characters are excluded; games supply canonical on-chain frames. Preset scene data is normalized for FriendSDK.",
+  "files": [
+    {
+      "source": "isometric-world-assets/renderer.mjs",
+      "sha256": "8541e8e58cdfa1f8adaaa58e52fa2d3fb9f0c3d3fc27c9159acd6498317fc008"
+    },
+    {
+      "source": "isometric-world-assets/world-configs.json",
+      "sha256": "d4c22da82b8e0f3e944e9a58c4ee494084859856776a2f35445fac8404e3be9d"
+    },
+    {
+      "source": "isometric-world-assets/art-direction.md",
+      "sha256": "88968d5191922b5bcd2d830aece5ed0b37f02ed1a9ca5fbfa3ee0c2d0c282dd7"
+    },
+    {
+      "source": "isometric-world-assets/community-creator-kit/prompts/AGENT-PROMPT.md",
+      "sha256": "e0a36f057f36c1b6fe79c5e8152994da3c08886f0ed39fdf897852b7c5e6046c"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Rare Friends: Fishing",
+  "consumable": "Bait",
+  "price": "1000000000000000000",
+  "outcomes": [
+    { "name": "Old Boot", "chanceBps": 1500, "reward": "0" },
+    { "name": "Sardine", "chanceBps": 3000, "reward": "250000000000000000" },
+    { "name": "Sunfish", "chanceBps": 2200, "reward": "500000000000000000" },
+    { "name": "Bream", "chanceBps": 1400, "reward": "750000000000000000" },
+    { "name": "Rainbow Trout", "chanceBps": 900, "reward": "1500000000000000000" },
+    { "name": "Catfish", "chanceBps": 500, "reward": "2500000000000000000" },
+    { "name": "Sturgeon", "chanceBps": 300, "reward": "5000000000000000000" },
+    { "name": "Legend", "chanceBps": 200, "reward": "10000000000000000000" }
+  ]
+}
