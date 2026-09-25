@@ -7,6 +7,12 @@ import { GameMenu } from "@rarefriends/friendsdk/frame";
 import { GymWorld, type GymStation } from "./gym-world";
 import { VIEW, toView, worldRect, type RingGeometry } from "./gym-scene";
 import { BurnRitual } from "./burn-ritual";
+import {
+  STAT_KEYS, TIER_MAX_LEVEL, attackCooldownMs, buildCharacterSheet, combatLevel, cumulativeXpForLevel, defenceValueFor,
+  generationMultiplier as generationMultiplierNumber, levelForXp, makeReceipt, maxHitFor, maxHpFor, statXpFromReceipts,
+  burnXp as xpForGeneration, trainingSecondsFor as secondsForGeneration,
+  type BurnReceipt, type Generation as BurnGeneration, type StatKey, type Stats, type Tier,
+} from "./proof-of-burn";
 import type { EquipmentKind } from "./gym-equipment";
 import { getWorldPreset, validateWorld, project, type WorldPoint } from "@rarefriends/friendsdk/world";
 import { formatGameAmount } from "@rarefriends/friendsdk/ui";
@@ -43,12 +49,9 @@ import "./style.css";
  *     is the docs' real "All upgrade prices" table, reproduced exactly
  *     (verified: Gen 1 step 0 = 50,000 RF, Gen 6 step 3 = 1.6875 RF, etc.)
  * ------------------------------------------------------------------------ */
-const TIER_MAX_LEVEL = [20, 40, 60, 80, 100] as const;
-type Tier = 0 | 1 | 2 | 3 | 4;
 const RF_DECIMALS = 18;
 const RF_UNIT = 10n ** BigInt(RF_DECIMALS);
 
-function generationMultiplierNumber(generation: number): number { return 10 ** Math.max(0, 6 - generation); }
 function generationMultiplierRf(generation: number): bigint { return 10n ** BigInt(Math.max(0, 6 - generation)); }
 
 /** The docs' exact "All upgrade prices" formula: base * 1.5^step, base = generationMultiplier(g) * 0.5 RF. */
@@ -65,38 +68,11 @@ function demoBalanceForGeneration(generation: number): bigint {
   return ([0, 1, 2, 3] as const).reduce((sum, step) => sum + tierUpgradeCost(generation, step), 0n);
 }
 
-const STAT_KEYS = ["hp", "str", "agi", "def"] as const;
-type StatKey = typeof STAT_KEYS[number];
-type Stats = Record<StatKey, number>;
 const STAT_LABEL: Record<StatKey, string> = { hp: "HP", str: "Strength", agi: "Agility", def: "Defence" };
 
-/**
- * Quadratic XP curve, calibrated to one exact rule: burning a Friend of your
- * OWN generation grants exactly enough XP to fully max a stat, 0 -> level
- * 100 (once Tier 4 is unlocked) — no mountain of same-tier burns required.
- * This falls out of a clean identity: a same-generation burn always grants
- * `generationMultiplier(ownGen)` XP (see xpForGeneration below), so setting
- * the total XP required to hit level 100 to exactly that same value makes
- * cumulativeXpForLevel(100, scale) === scale, true for every generation at
- * once, with no special-casing per generation.
- * The curve is quadratic (level ∝ sqrt(xp)) rather than linear so it isn't
- * an all-or-nothing jump: early levels are cheap (any smaller, weaker-tier
- * burn still buys real progress), and the final stretch toward 100 is what
- * actually costs close to the full same-generation meal.
- */
-function cumulativeXpForLevel(level: number, scale: number): number {
-  return Math.round(scale * (level / 100) ** 2);
-}
-function levelForXp(xp: number, scale: number): number {
-  if (scale <= 0) return 0;
-  return Math.max(0, Math.min(100, Math.floor(100 * Math.sqrt(Math.min(1, xp / scale)))));
-}
+/* The XP curve, burn XP, training times, Tier caps and combat numbers live in
+ * proof-of-burn.ts, the shared module other games can reuse. */
 
-type BurnGeneration = 1 | 2 | 3 | 4 | 5 | 6;
-function xpForGeneration(generation: BurnGeneration): number { return generationMultiplierNumber(generation); }
-/** Original brief fixes only Gen 6 (5s) / Gen 5 (30s), a ~6x step; extended with the same ratio —
- *  which means Gen 1 training time is 38,880s (10h 48m), so raw seconds alone stop being readable. */
-function secondsForGeneration(generation: BurnGeneration): number { return 5 * 6 ** (6 - generation); }
 /** Shows at most two units (s, m+s, or h+m) — whichever pair is relevant at that duration. */
 function formatDuration(totalSeconds: number): string {
   const seconds = Math.round(totalSeconds);
@@ -108,7 +84,8 @@ function formatDuration(totalSeconds: number): string {
 }
 
 type BurnCandidate = Readonly<{ id: bigint; generation: BurnGeneration }>;
-type Training = Readonly<{ statKey: StatKey; xp: number; totalSeconds: number; endsAt: number }>;
+/** A training session: the burn receipts it will turn into stats once the timer ends. */
+type Training = Readonly<{ statKey: StatKey; xp: number; totalSeconds: number; endsAt: number; receipts: readonly BurnReceipt[] }>;
 
 /** Hex per generation, reused for the sacrifice-list portrait frame and as the
  *  burn shatter particles' starting colour — mirrors the food-chain palette
@@ -138,6 +115,8 @@ type BurnFx = Readonly<{
   startedAt: number;
   durationMs: number;
   intensity: number;
+  /** One proof-of-burn receipt per sacrificed Friend (including the ones folded into "+N"). */
+  receipts: readonly BurnReceipt[];
 }>;
 const MAX_BURN_FX_PORTRAITS = 6;
 /** Full sacrifice sequence (summon → ignite → burn → embers fly to the station):
@@ -252,11 +231,6 @@ function clamp(value: number, min: number, max: number) {
  * has no trained toughness yet, but still has a nonzero body/power/speed.
  */
 type Combatant = Readonly<{ agility: number; maxHit: number; defence: number }>;
-const BASE_ATTACK_COOLDOWN_MS = 1500;
-function maxHitFor(strength: number): number { return Math.floor(1 + strength * 0.5); }
-function maxHpFor(hp: number): number { return 9 + hp; }
-function defenceValueFor(defLevel: number): number { return Math.max(0, defLevel - 1); }
-function attackCooldownMs(agility: number): number { return BASE_ATTACK_COOLDOWN_MS / (1 + agility * 0.01); }
 function combatantFor(stats: Stats): Combatant {
   return { agility: stats.agi, maxHit: maxHitFor(stats.str), defence: defenceValueFor(stats.def) };
 }
@@ -535,10 +509,6 @@ function nextStatGain(key: StatKey, level: number, cap: number): string | null {
   }
   return null;
 }
-/** Combat Level: the average of the four stat levels, shown as the "CL" badge. */
-function combatLevel(levels: Stats): number {
-  return Math.round((levels.hp + levels.str + levels.agi + levels.def) / 4);
-}
 
 /** 8 × 8 pixel icons, one per stat, in that stat's colour. */
 const STAT_ICON_ROWS: Record<StatKey, readonly string[]> = {
@@ -598,6 +568,45 @@ function FlameIcon({ className }: { className?: string }) {
   </svg>;
 }
 
+/**
+ * Proof of Burn card, styled after the Rare Friends portfolio: stat boxes on
+ * white, then a black strip with the most recently burned Friends (their real
+ * sprites when already loaded, a neutral silhouette otherwise).
+ */
+function ProofOfBurnCard({ friendId, family, generation, tier, burned, xp, combatLevel: cl, byGeneration, latest }: {
+  friendId: string; family?: string; generation: number | null; tier: Tier; burned: number; xp: number; combatLevel: number;
+  byGeneration: readonly (readonly [number, number])[];
+  latest: readonly { id: string; generation: number; points: SpritePoints | null }[];
+}) {
+  const more = burned - latest.length;
+  return <div className="gym-pob-card" role="group" aria-label="Proof of burn card">
+    <div className="gym-pob-head">
+      <div><span className="gym-pob-kicker">RARE FRIENDS</span><strong className="gym-pob-title">PROOF OF BURN</strong></div>
+      <span className="gym-pob-id">[ {family ?? "Friend"} #{friendId} · Gen {generation ?? "…"} ]</span>
+    </div>
+    <div className="gym-pob-boxes">
+      <div><small>Friends burned</small><b>{burned.toLocaleString("en-US")}</b></div>
+      <div><small>XP gained</small><b>{xp.toLocaleString("en-US")}</b></div>
+      <div><small>Hardwire burned</small><b>{xp.toLocaleString("en-US")}</b><em>RF of burned NFT value</em></div>
+      <div className="gym-pob-dark"><small>Combat Level</small><b>{cl}</b><em>Tier {tier} · cap {TIER_MAX_LEVEL[tier]}</em></div>
+    </div>
+    <div className="gym-pob-strip">
+      <div className="gym-pob-friends">
+        {latest.map((friend, index) => <figure key={`${friend.id}-${index}`}>
+          <svg viewBox="0 0 16 16" shapeRendering="crispEdges" fill="#fff" aria-hidden="true"><path d={pixelsToSvgPath(friend.points ?? SILHOUETTE_PIXELS)} /></svg>
+          <figcaption><span><i />Gen-{friend.generation}</span><span>#{friend.id}</span></figcaption>
+        </figure>)}
+        {more > 0 && <figure className="gym-pob-more"><span>+{more}</span><figcaption>more</figcaption></figure>}
+      </div>
+      <div className="gym-pob-summary">
+        <strong>{burned} BURNED</strong>
+        <span>{byGeneration.map(([g, n]) => `${n} × Gen ${g}`).join(" · ")}</span>
+        <span>since last transfer · resets on sale</span>
+      </div>
+    </div>
+  </div>;
+}
+
 /** Shown on every info screen: the stats are a preview system, not a finished game economy. */
 function PreviewNote() {
   return <p className="gym-preview-note"><strong>Preview stats.</strong> Character stats are preliminary: a shared base for future Rare Friends mini-games. Everything here, including $RF, is simulated.</p>;
@@ -642,7 +651,12 @@ export default function BurningGym({ friendId, client, paused }: GameComponentPr
   const [genRetry, setGenRetry] = useState(0);
 
   const [tier, setTier] = useState<Tier>(0);
-  const [statXp, setStatXp] = useState<Stats>({ hp: 0, str: 0, agi: 0, def: 0 });
+  // Proof of burn: stats are never stored directly. They are derived from the
+  // burn receipts of finished trainings (see proof-of-burn.ts).
+  const [receipts, setReceipts] = useState<readonly BurnReceipt[]>([]);
+  const statXp = useMemo<Stats>(() => statXpFromReceipts(receipts), [receipts]);
+  const [showSheetJson, setShowSheetJson] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("");
   const [training, setTraining] = useState<Training | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [pool, setPool] = useState<BurnCandidate[]>([]);
@@ -719,7 +733,8 @@ export default function BurningGym({ friendId, client, paused }: GameComponentPr
       const left = Math.max(0, Math.ceil((training.endsAt - Date.now()) / 1000));
       setRemaining(left);
       if (left <= 0) {
-        setStatXp(prev => ({ ...prev, [training.statKey]: prev[training.statKey] + training.xp }));
+        const trainedAt = Date.now();
+        setReceipts(prev => [...prev, ...training.receipts.map(receipt => ({ ...receipt, trainedAt }))]);
         setMessage(`Training complete — ${STAT_LABEL[training.statKey]} +${training.xp} XP!`);
         sound.current?.play("action-ready");
         setTraining(null);
@@ -739,7 +754,7 @@ export default function BurningGym({ friendId, client, paused }: GameComponentPr
     const delay = Math.max(0, burnFx.startedAt + burnFx.durationMs - Date.now());
     const id = window.setTimeout(() => {
       const count = burnFx.candidates.length + burnFx.overflowCount;
-      setTraining({ statKey: burnFx.statKey, xp: burnFx.xp, totalSeconds: burnFx.totalSeconds, endsAt: Date.now() + burnFx.totalSeconds * 1000 });
+      setTraining({ statKey: burnFx.statKey, xp: burnFx.xp, totalSeconds: burnFx.totalSeconds, endsAt: Date.now() + burnFx.totalSeconds * 1000, receipts: burnFx.receipts });
       setMessage(`${count} Friend${count > 1 ? "s" : ""} sacrificed. Training ${STAT_LABEL[burnFx.statKey]} at the ${STATIONS[burnFx.statKey].label}…`);
       sound.current?.play("reward");
       setBurnFx(null);
@@ -918,6 +933,7 @@ export default function BurningGym({ friendId, client, paused }: GameComponentPr
       }),
       overflowCount: selected.length - shown.length,
       xp, totalSeconds,
+      receipts: selected.map(c => makeReceipt(friendId.toString(), c.id.toString(), c.generation, statKey, Date.now())),
       startedAt: Date.now(),
       durationMs: reducedMotion ? BURN_REDUCED_DURATION_MS
         : BURN_DURATION_MS_MIN + (BURN_DURATION_MS_MAX - BURN_DURATION_MS_MIN) * intensity,
@@ -1128,6 +1144,56 @@ export default function BurningGym({ friendId, client, paused }: GameComponentPr
           </tr>;
         })}</tbody>
       </table>
+
+      {/* Proof of burn: the sheet above is exactly the sum of these receipts. */}
+      <section className="gym-proof">
+        <p className="gym-proof-lead">Your stats are not stored: they are the sum of these burn receipts. Any game can read the same receipts and get the same sheet. On a sale or transfer, the receipts (and Tier) reset.</p>
+        {(() => {
+          const counted = receipts.filter(receipt => receipt.trainedAt !== undefined);
+          if (!counted.length) return <p className="gym-proof-empty">No burns yet. Sacrifice a Friend at any machine to write your first receipt.</p>;
+          const totalXp = counted.reduce((sum, receipt) => sum + receipt.xp, 0);
+          const byGeneration = ([1, 2, 3, 4, 5, 6] as const)
+            .map(g => [g, counted.filter(receipt => receipt.burnedGeneration === g).length] as const).filter(([, n]) => n > 0);
+          const latest = [...counted].reverse();
+          return <>
+            <ProofOfBurnCard friendId={friendId.toString()} family={sprites?.familyName} generation={generation} tier={tier}
+              burned={counted.length} xp={totalXp} combatLevel={combatLevel(levels)} byGeneration={byGeneration}
+              latest={latest.slice(0, 6).map(receipt => {
+                const cached = spriteCacheRef.current.get(receipt.burned);
+                return { id: receipt.burned, generation: receipt.burnedGeneration, points: cached && cached !== "error" ? spritePoints(cached) : null };
+              })} />
+            <details className="gym-proof-receipts">
+              <summary>Receipts ({counted.length})</summary>
+              <ol className="gym-proof-log">
+                {latest.slice(0, 50).map((receipt, index) => <li key={`${receipt.burned}-${receipt.burnedAt}-${index}`} data-stat={receipt.stat}>
+                  <StatIcon statKey={receipt.stat} size={12} />
+                  <span>#{receipt.burned} · Gen {receipt.burnedGeneration} → {STAT_LABEL[receipt.stat]} <strong>+{receipt.xp.toLocaleString("en-US")} XP</strong></span>
+                  <time>{new Date(receipt.burnedAt).toLocaleTimeString("en-GB")}</time>
+                </li>)}
+              </ol>
+              {counted.length > 50 && <p className="gym-proof-empty">Showing the latest 50 of {counted.length} receipts; the JSON has all of them.</p>}
+            </details>
+          </>;
+        })()}
+        <button type="button" className="gym-proof-toggle" aria-expanded={showSheetJson} onClick={() => { setShowSheetJson(value => !value); setCopyStatus(""); }}>
+          {showSheetJson ? "Hide" : "View"} character sheet JSON
+        </button>
+        {showSheetJson && generation !== null && (() => {
+          const json = JSON.stringify(buildCharacterSheet({ friendId: friendId.toString(), generation, family: sprites?.familyName, tier, receipts }), null, 2);
+          return <div className="gym-proof-json">
+            <textarea readOnly value={json} aria-label="Character sheet JSON" rows={10}
+              onFocus={event => event.currentTarget.select()} />
+            <button type="button" onClick={event => {
+              const area = event.currentTarget.previousElementSibling;
+              if (area instanceof HTMLTextAreaElement) { area.focus(); area.select(); }
+              navigator.clipboard?.writeText(json).then(() => setCopyStatus("Copied."), () => setCopyStatus("Selected: press Ctrl+C / Cmd+C to copy."));
+              if (!navigator.clipboard) setCopyStatus("Selected: press Ctrl+C / Cmd+C to copy.");
+            }}>Copy JSON</button>
+            {copyStatus && <span className="gym-proof-copy">{copyStatus}</span>}
+            <p className="gym-proof-empty">Format: <code>proof-of-burn</code> v1 (see PROOF_OF_BURN.md in the repository). Simulated preview data.</p>
+          </div>;
+        })()}
+      </section>
     </GameMenu>}
 
     {menu === "upgrade" && <GameMenu title="Tier Upgrade" onClose={() => navigate(null)}

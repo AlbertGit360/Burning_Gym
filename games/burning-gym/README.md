@@ -10,6 +10,15 @@ The gym is meant as that base: the stats, the burn-to-train loop and the Tier ca
 
 Built with FriendSDK v0.1.2.
 
+**Proof of Burn.** The character sheet is derived from burn receipts, one per sacrificed Friend. The rules live in the open, dependency-free module [`proof-of-burn.ts`](proof-of-burn.ts), and the spec is in [`PROOF_OF_BURN.md`](PROOF_OF_BURN.md). Any game can import the module and rebuild the same sheet.
+
+![Proof of Burn: burn → receipt → character sheet → any game](media/proof-of-burn-flow.png)
+
+### Updates
+
+- **Sep 25, part 2: Proof of Burn card + flow diagram.** The character sheet now opens with a Proof of Burn card in the Rare Friends portfolio style: Friends burned, XP gained, hardwire burned (the RF value of the burned NFTs), Combat Level with its Tier cap, and a strip of the burned Friends with their generation and token id. The receipt log and JSON export sit right below it. Added the flow diagram above.
+- **Sep 25, part 1: Proof of Burn.** Added burn receipts (stats are derived from them), a receipt log and JSON export in the character sheet, and the `proof-of-burn.ts` module + spec. Thanks to the Rare Friends team for the feedback.
+
 ## How the burn system works
 
 1. **The food chain.** Your Friend can only burn Friends of **its own generation or weaker**. A higher generation number means a weaker, more common Friend. A Gen 1 can burn anything; a Gen 6 can only burn other Gen 6s.
@@ -124,7 +133,7 @@ The output is written to `games/burning-gym/.friendsdk/`.
 4. **Tier caps.** Tier 0–4 caps each stat at 20 / 40 / 60 / 80 / 100. Tier upgrades cost RF, priced from the Rare Friends upgrade table: `generationMultiplier × 0.5 × 1.5^step`.
 5. **Training Ring.** Spar with a training dummy at any tier to test your build, live, with the combat engine the future game modes will use.
 6. **Game Modes (coming soon).** PvP Arena, PvE Dungeons, Tier Tournaments and Boss Raids are shown as placeholder cards. None is playable yet.
-7. **Character sheet and HUD.** The top-left frame shows real fighting numbers (max HP, max hit, seconds per attack, damage blocked) and a Combat Level (average of the four levels). Click it for the full sheet, which shows what the next level of each stat buys.
+7. **Character sheet and HUD.** The top-left frame shows real fighting numbers (max HP, max hit, seconds per attack, damage blocked) and a Combat Level (average of the four levels). Click it for the full sheet, which shows what the next level of each stat buys, followed by the Proof of Burn card (burned Friends, XP, hardwire burned), the receipt log and the JSON export.
 
 ## Screenshots
 
