@@ -8,7 +8,7 @@ Your Rare Friend trains in a neon-lit underground gym. Burn lesser Friends to fe
 
 The gym is meant as that base: the stats, the burn-to-train loop and the Tier caps belong to the Friend, not to this room, so other games can read and reuse them.
 
-Built with FriendSDK v0.1.2.
+Built with FriendSDK v0.1.4.
 
 **Proof of Burn.** The character sheet is derived from burn receipts, one per sacrificed Friend. The rules live in the open, dependency-free module [`proof-of-burn.ts`](proof-of-burn.ts), and the spec is in [`PROOF_OF_BURN.md`](PROOF_OF_BURN.md). Any game can import the module and rebuild the same sheet.
 

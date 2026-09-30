@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { createPublicClient, http } from "viem";
+import { createClient, http, type PublicClient } from "viem";
+import { getBlockNumber, getChainId, readContract } from "viem/actions";
 import type { GameComponentProps } from "@rarefriends/friendsdk/runtime";
 import { GameMenu } from "@rarefriends/friendsdk/frame";
 import { GymWorld, type GymStation } from "./gym-world";
@@ -641,8 +642,21 @@ function GameModeArt({ mode }: { mode: GameModeId }) {
   </svg>;
 }
 
+/** Read-only RPC client with just the calls the gym needs (ownership, generation, artwork).
+ *  Mirrors FriendSDK v0.1.4's createFriendReadClient (not a public export), so the bundle
+ *  carries no transaction-capable viem actions. */
+type GymReadClient = Pick<PublicClient, "getBlockNumber" | "getChainId" | "readContract">;
+function createGymReadClient(rpcUrl: string): GymReadClient {
+  const rpc = createClient({ transport: http(rpcUrl, { retryCount: 1, timeout: 12_000 }), cacheTime: 0, pollingInterval: 1_000 });
+  return {
+    getBlockNumber: parameters => getBlockNumber(rpc, parameters),
+    getChainId: () => getChainId(rpc),
+    readContract: parameters => readContract(rpc, parameters),
+  } as GymReadClient;
+}
+
 export default function BurningGym({ friendId, client, paused }: GameComponentProps) {
-  const publicClient = useMemo(() => createPublicClient({ transport: http(GENERATION_SPRITE_MANIFEST.rpcUrl, { retryCount: 1, timeout: 12_000 }) }), []);
+  const publicClient = useMemo(() => createGymReadClient(GENERATION_SPRITE_MANIFEST.rpcUrl), []);
   const spriteReader = useMemo(() => createGenerationSpriteReader(publicClient), [publicClient]);
 
   const [generation, setGeneration] = useState<number | null>(null);
